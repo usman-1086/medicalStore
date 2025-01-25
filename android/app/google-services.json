@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "191035462286",
+    "project_id": "medicalstore-eab36",
+    "storage_bucket": "medicalstore-eab36.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191035462286:android:956aaf60dc6600a6bf2fdf",
+        "android_client_info": {
+          "package_name": "com.playmaker.medicalstore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSwEO-b3RDrtwxCfIHswg9Gp32jXisBMM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

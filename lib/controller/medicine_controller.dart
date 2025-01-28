@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import 'package:medicalstore/data/models/medicine.dart';
 
-import '../data/models/cart_history_item.dart';
 
 class MedicineController extends GetxController {
   RxList<Medicine> medicines = <Medicine>[].obs;
@@ -14,23 +14,80 @@ class MedicineController extends GetxController {
   final RxList<CartHistoryItem> cartHistory = <CartHistoryItem>[].obs;
 
 
+
   @override
   void onInit() {
     super.onInit();
     fetchMedicines();
-    
+
   }
 
-  void saveCartToHistory() {
-    final timestamp = DateTime.now();
-    for (final item in cartItems) {
-      cartHistory.add(CartHistoryItem(
-        medicineName: item.medicine.medicineName,
-        quantity: item.quantity,
-        dateTime: timestamp,
-      ));
+  // Save cart to Firestore and clear local cart
+  Future<void> saveCartToFirestore() async {
+    try {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      final batch = _firestore.batch(); // Use batch for multiple writes
+
+      for (final item in cartItems) {
+        final timestamp = DateTime.now();
+        final historyRef = _firestore
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('cartHistory')
+            .doc();
+
+        batch.set(historyRef, {
+          'medicineName': item.medicine.medicineName,
+          'quantity': item.quantity,
+          'price': item.medicine.medicinePrice * item.quantity,
+          'date': timestamp.toIso8601String(), // Save date in ISO format
+          'time': TimeOfDay.now().format(Get.context!), // Save time as HH:MM AM/PM
+        });
+      }
+
+      await batch.commit(); // Commit all writes
+      clearCart(); // Clear cart after saving
+
+      Get.snackbar(
+        "Success",
+        "Cart saved to history!",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to save cart: $e",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
-    clearCart(); // Clear cart after saving
+  }
+
+// Fetch history from Firestore
+  Future<void> fetchCartHistory() async {
+    try {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('cartHistory')
+          .orderBy('date', descending: true) // Sort by date
+          .get();
+
+      cartHistory.value = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return CartHistoryItem.fromFirestore(data); // Use the factory method to handle date
+      }).toList();
+    } catch (e) {
+      print("Error fetching cart history: $e");
+    }
   }
 
   void resetMedicines() {
@@ -121,8 +178,14 @@ class MedicineController extends GetxController {
 
   // Remove item from cart
   void removeFromCart(CartItem cartItem) {
+    // Remove the item from the cart
     cartItems.remove(cartItem);
-    updateStock(cartItem.medicine.id, cartItem.quantity);
+
+    // Update the stock in Firestore by setting the stock to the original quantity.
+    updateStock(cartItem.medicine.id, cartItem.medicine.quantity);
+
+    // Refresh the medicines list to reflect the updated stock
+    fetchMedicines();
   }
 
 // Update stock of a medicine for the logged-in user
@@ -186,7 +249,6 @@ class MedicineController extends GetxController {
     }
   }
 
-
 }
 
 // Cart item model
@@ -195,4 +257,50 @@ class CartItem {
   int quantity;
 
   CartItem({required this.medicine, required this.quantity});
+}
+
+
+
+
+class CartHistoryItem {
+  final String medicineName;
+  final int quantity;
+  final int price; // Store as int
+  final DateTime dateTime;
+
+  CartHistoryItem({
+    required this.medicineName,
+    required this.quantity,
+    required this.price,
+    required this.dateTime,
+  });
+
+  // Add a method to convert from Firestore data
+  factory CartHistoryItem.fromFirestore(Map<String, dynamic> data) {
+    DateTime parsedDate;
+    if (data['date'] is String) {
+      // If it's a string, parse it to DateTime
+      parsedDate = DateTime.parse(data['date']);
+    } else if (data['date'] is Timestamp) {
+      // If it's a Firestore Timestamp, convert it to DateTime
+      parsedDate = (data['date'] as Timestamp).toDate();
+    } else {
+      parsedDate = DateTime.now(); // Default to current time if invalid
+    }
+
+    // Handle price being either int or double
+    int parsedPrice = (data['price'] ?? 0).toDouble().toInt(); // Convert to int
+
+    return CartHistoryItem(
+      medicineName: data['medicineName'] ?? '',
+      quantity: data['quantity'] ?? 0,
+      price: parsedPrice, // Use parsed price as int
+      dateTime: parsedDate,
+    );
+  }
+
+  // Format the date to a readable string
+  String get formattedDate {
+    return DateFormat('yyyy-MM-dd – HH:mm').format(dateTime); // Customize format as needed
+  }
 }

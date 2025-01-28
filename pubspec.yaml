@@ -39,6 +39,10 @@ dependencies:
   cloud_firestore:
   firebase_auth:
   get:
+  intl:
+  esc_pos_printer:
+  esc_pos_utils:
+
 
 dev_dependencies:
   flutter_test:

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../data/repositories/auth_repository.dart';
 import '../screen/login_screen.dart';
+import '../screen/main_screen.dart';
 import 'medicine_controller.dart';
 class AuthController extends GetxController {
   var isLoggedIn = false.obs;
@@ -33,15 +34,14 @@ class AuthController extends GetxController {
       final user = await _authRepository.login(email, password);
       if (user != null) {
         isLoggedIn(true);
-        Get.offAllNamed('/home');
-        // Fetch medicines for the logged-in user
         Get.find<MedicineController>().fetchMedicines();
+        // Use Get.offAll(MainScreen()) to navigate and remove previous screens from stack
+        Get.offAll(() => MainScreen());  // Replaces the previous screen with MainScreen
       }
     } catch (e) {
       Get.snackbar("Login Failed", "Unexpected error occurred.");
     }
   }
-
   // Logout method
   Future<void> logout() async {
     await _authRepository.logout();

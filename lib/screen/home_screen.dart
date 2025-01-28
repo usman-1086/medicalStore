@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:medicalstore/controller/auth_controller.dart';
 import 'package:medicalstore/controller/medicine_controller.dart';
 import '../data/models/medicine.dart';
-import 'cart_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final MedicineController medicineController = Get.put(MedicineController());

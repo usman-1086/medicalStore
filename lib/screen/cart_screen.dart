@@ -91,19 +91,22 @@ class CartScreen extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(bottom: screenHeight * 0.03),  // Bottom padding relative to screen height
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  // Save cart items to history
+                  await medicineController.saveCartToFirestore();
+
+                  // Clear the cart after printing
                   medicineController.clearCart();
+
                   Get.snackbar(
                     "Cart Cleared",
-                    "Your cart has been saved to history.",
-                    snackPosition: SnackPosition.BOTTOM,
+                    "Your cart has been saved to history and the receipt has been printed.",
+                    snackPosition: SnackPosition.TOP,
                     backgroundColor: Colors.green,
                     colorText: Colors.white,
                     duration: Duration(seconds: 2),
                   );
-
-                  // Optionally navigate to the History Screen
-                  Get.toNamed('/history');
+                  // Get.toNamed('/history'); // Navigate to the History screen
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(
@@ -123,8 +126,6 @@ class CartScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-
             ),
           ],
         ),

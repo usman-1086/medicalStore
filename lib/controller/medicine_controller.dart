@@ -134,7 +134,7 @@ class MedicineController extends GetxController {
       Get.snackbar(
         "Success",
         "Medicine added successfully!",
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -328,7 +328,7 @@ class CartItem {
 class CartHistoryItem {
   final String medicineName;
   final int quantity;
-  final int price; // Store as int
+  final double price; // Store as int
   final DateTime dateTime;
 
   CartHistoryItem({
@@ -352,7 +352,7 @@ class CartHistoryItem {
     }
 
     // Handle price being either int or double
-    int parsedPrice = (data['price'] ?? 0).toDouble().toInt(); // Convert to int
+    double parsedPrice = (data['price'] ?? 0).toDouble(); // Convert to int
 
     return CartHistoryItem(
       medicineName: data['medicineName'] ?? '',

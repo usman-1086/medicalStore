@@ -188,25 +188,50 @@ class MedicineController extends GetxController {
     fetchMedicines();
   }
 
-// Update stock of a medicine for the logged-in user
-  Future<void> updateStock(String medicineId, int newStock) async {
+// Update stock and optionally name of a medicine for the logged-in user
+  Future<void> updateStock(String medicineId, int newStock, {String? newName}) async {
     try {
       // Get the current logged-in user
       User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) return;
 
-      // Update the medicine stock under the current user's collection
+      // Prepare the update data
+      final updateData = <String, dynamic>{
+        'quantity': newStock,
+      };
+
+      // If a new name is provided, add it to the update data
+      if (newName != null && newName.isNotEmpty) {
+        updateData['medicineName'] = newName;
+      }
+
+      // Update the medicine document in Firestore
       await _firestore
           .collection('users')
           .doc(currentUser.uid)
           .collection('medicines')
           .doc(medicineId)
-          .update({'quantity': newStock});
+          .update(updateData);
 
-      // Refresh the medicine list after updating stock
+      // Refresh the medicine list after updating
       fetchMedicines();
+
+      Get.snackbar(
+        "Success",
+        "Medicine updated successfully!",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
-      print("Error updating stock: $e");
+      print("Error updating stock or name: $e");
+      Get.snackbar(
+        "Error",
+        "Failed to update medicine: $e",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
   // Delete medicine
@@ -248,6 +273,44 @@ class MedicineController extends GetxController {
       }).toList();
     }
   }
+
+  Future<void> updateMedicineDetails(String userId, String medicineId, String newName, int newPrice, int newStock) async {
+    try {
+      // Reference to the specific medicine document
+      final medicineRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('medicines')
+          .doc(medicineId);
+
+      // Update the fields
+      await medicineRef.update({
+        'medicineName': newName,
+        'medicinePrice': newPrice,
+        'quantity': newStock,
+      });
+
+      // Refresh medicines list after updating
+      await fetchMedicines();
+
+      Get.snackbar(
+        "Success",
+        "Medicine details updated successfully!",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to update medicine details: $e",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
 
 }
 

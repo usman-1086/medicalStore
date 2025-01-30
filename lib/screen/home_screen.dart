@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:medicalstore/controller/auth_controller.dart';
@@ -10,12 +11,15 @@ class HomeScreen extends StatelessWidget {
   final AuthController authController = Get.put(AuthController());
   final TextEditingController searchController = TextEditingController();
 
-
-
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
+
+    // Adjustments for laptops
+    if (width > 1024) {
+      width = 1024; // Limit width to 1024 for better layout on laptops
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -192,18 +196,26 @@ class HomeScreen extends StatelessWidget {
 
   // Show dialog to update stock and price of the medicine
   Future<void> _showUpdateStockDialog(BuildContext context, Medicine medicine) async {
+    final nameController = TextEditingController(text: medicine.medicineName);
     final priceController = TextEditingController(text: medicine.medicinePrice.toString());
     final stockController = TextEditingController(text: medicine.quantity.toString());
+
+    // Get an instance of MedicineController
+    final medicineController = Get.find<MedicineController>();
 
     return showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Update Price and Stock for ${medicine.medicineName}"),
+          title: Text("Update Medicine Details"),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(labelText: "New Medicine Name"),
+                ),
                 TextField(
                   controller: priceController,
                   decoration: InputDecoration(labelText: "New Price"),
@@ -220,21 +232,27 @@ class HomeScreen extends StatelessWidget {
           actions: [
             ElevatedButton(
               onPressed: () {
+                final newName = nameController.text.trim();
                 final newPrice = int.tryParse(priceController.text);
                 final newStock = int.tryParse(stockController.text);
-                if (newPrice != null && newStock != null) {
-                  updateMedicinePriceAndQuantity(
-                    authController.currentUser?.uid ?? '',
-                    medicine.id,
-                    newPrice,
-                    newStock,
-                  );
-                  Get.back();
-                } else {
-                  Get.snackbar("Invalid Input", "Please enter valid price and stock.");
+
+                if (newName.isEmpty || newPrice == null || newStock == null) {
+                  Get.snackbar("Invalid Input", "Please fill all fields with valid data.");
+                  return;
                 }
+
+                // Call updateMedicineDetails from MedicineController
+                medicineController.updateMedicineDetails(
+                  FirebaseAuth.instance.currentUser?.uid ?? '',
+                  medicine.id,
+                  newName,
+                  newPrice,
+                  newStock,
+                );
+
+                Get.back(); // Close the dialog
               },
-              child: Text("Update Stock"),
+              child: Text("Update Details"),
             ),
           ],
         );
@@ -272,7 +290,7 @@ class HomeScreen extends StatelessWidget {
                 final name = nameController.text.trim();
                 final company = companyController.text.trim();
                 final salt = saltController.text.trim();
-                final price = int.tryParse(priceController.text.trim()) ?? 0;
+                final price = double.tryParse(priceController.text.trim()) ?? 0;
                 final quantity = int.tryParse(quantityController.text.trim()) ?? 0;
 
                 if (name.isNotEmpty && company.isNotEmpty && price > 0 && quantity > 0) {
@@ -321,13 +339,7 @@ class HomeScreen extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ElevatedButton(
-                onPressed: () {
-                  _showUpdateStockDialog(context, medicine);
-                  Get.back();
-                },
-                child: Text("Update Stock"),
-              ),
+
               ElevatedButton(
                 onPressed: () {
                   medicineController.deleteMedicine(medicine.id);

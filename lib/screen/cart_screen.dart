@@ -11,13 +11,21 @@ class CartScreen extends StatelessWidget {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
 
+    // Adjustments for large screens like laptops or desktops
+    if (screenWidth > 1024) {
+      screenWidth = 1024; // Set a max width limit for very large screens
+    }
+
+    // Dynamic font size based on screen width
+    double fontSizeFactor = screenWidth > 800 ? 0.035 : 0.05;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Cart'),
-        backgroundColor: Colors.blueAccent,  // AppBar color
+        backgroundColor: Colors.blueAccent, // AppBar color
       ),
       body: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.03),  // Padding relative to screen width
+        padding: EdgeInsets.all(screenWidth * 0.03), // Padding relative to screen width
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -29,23 +37,26 @@ class CartScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final cartItem = medicineController.cartItems[index];
                     return Card(
-                      margin: EdgeInsets.only(bottom: screenHeight * 0.02),  // Margin relative to screen height
+                      margin: EdgeInsets.only(bottom: screenHeight * 0.02), // Margin relative to screen height
                       elevation: 5.0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
                       child: ListTile(
-                        contentPadding: EdgeInsets.all(screenWidth * 0.03),  // Padding relative to screen width
+                        contentPadding: EdgeInsets.all(screenWidth * 0.03), // Padding relative to screen width
                         title: Text(
                           cartItem.medicine.medicineName,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: screenWidth * 0.05,  // Font size relative to screen width
+                            fontSize: screenWidth * fontSizeFactor, // Adjust font size dynamically
                           ),
                         ),
                         subtitle: Text(
                           'Quantity: ${cartItem.quantity} - Total: \Rs ${cartItem.medicine.medicinePrice * cartItem.quantity}',
-                          style: TextStyle(color: Colors.grey, fontSize: screenWidth * 0.04),  // Font size relative to screen width
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: screenWidth * (fontSizeFactor - 0.005), // Slightly smaller for subtitle
+                          ),
                         ),
                         trailing: IconButton(
                           icon: Icon(Icons.remove_shopping_cart),
@@ -70,16 +81,16 @@ class CartScreen extends StatelessWidget {
 
             // Total Bill Display
             Obx(() {
-              final total = medicineController.cartItems.fold<int>(0, (previousValue, cartItem) {
+              final total = medicineController.cartItems.fold<double>(0, (previousValue, cartItem) {
                 return previousValue + (cartItem.medicine.medicinePrice * cartItem.quantity);
               });
 
               return Padding(
-                padding: EdgeInsets.symmetric(vertical: screenHeight * 0.03),  // Vertical padding relative to screen height
+                padding: EdgeInsets.symmetric(vertical: screenHeight * 0.03), // Vertical padding relative to screen height
                 child: Text(
                   "Total Bill: \Rs $total",
                   style: TextStyle(
-                    fontSize: screenWidth * 0.06,  // Font size relative to screen width
+                    fontSize: screenWidth * (fontSizeFactor + 0.01), // Slightly larger font size for total
                     fontWeight: FontWeight.bold,
                     color: Colors.blueAccent,
                   ),
@@ -89,7 +100,7 @@ class CartScreen extends StatelessWidget {
 
             // Done Button
             Padding(
-              padding: EdgeInsets.only(bottom: screenHeight * 0.03),  // Bottom padding relative to screen height
+              padding: EdgeInsets.only(bottom: screenHeight * 0.03), // Bottom padding relative to screen height
               child: ElevatedButton(
                 onPressed: () async {
                   // Save cart items to history
@@ -121,7 +132,7 @@ class CartScreen extends StatelessWidget {
                 child: Text(
                   "Done",
                   style: TextStyle(
-                    fontSize: screenWidth * 0.05,
+                    fontSize: screenWidth * fontSizeFactor, // Adjusted font size for the button text
                     color: Colors.white,
                   ),
                 ),

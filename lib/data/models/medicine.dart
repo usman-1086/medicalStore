@@ -5,7 +5,7 @@ class Medicine {
   final String medicineName;
   final String medicineSalt;
   final String medicineCompany;
-  final int medicinePrice; // This should be an int
+  final double medicinePrice; // This should be an int
   final int quantity; // This should be an int
 
   Medicine({
@@ -27,7 +27,7 @@ class Medicine {
       medicineSalt: data['medicineSalt'] ?? '',
       medicineCompany: data['medicineCompany'] ?? '',
       // Ensure the price and quantity are parsed as integers
-      medicinePrice: int.tryParse(data['medicinePrice'].toString()) ?? 0,
+      medicinePrice: double.tryParse(data['medicinePrice'].toString()) ?? 0,
       quantity: int.tryParse(data['quantity'].toString()) ?? 0,
     );
   }
